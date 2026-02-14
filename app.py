@@ -1365,34 +1365,36 @@ def download2():
         
         if download_type == 'audio':
             output_filename = f'audio_{unique_id}.mp3'
-            ydl_opts = {
-                'format': 'bestaudio/best',
+           ydl_opts = {
+                'format': 'bestaudio[ext=m4a]/bestaudio/best',
                 'outtmpl': f'downloads/{output_filename}',
-                'ffmpeg_location': r'C:\ffmpeg\bin\ffmpeg.exe',
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': quality,
-                }],
                 'quiet': True,
-                'no_warnings': True
+                'no_warnings': True,
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['android', 'web'],
+                        'skip': ['hls', 'dash']
+                    }
+                },
+                'http_headers': {
+                    'User-Agent': 'com.google.android.youtube/17.36.4 (Linux; U; Android 12)',
+                }
             }
-        else:
-            output_filename = f'video_{unique_id}.mp4'
-            if quality == 'best':
-                format_str = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
-            else:
-                format_str = f'bestvideo[height<={quality}][ext=mp4]+bestaudio[ext=m4a]/best[height<={quality}][ext=mp4]/best'
-            
-            ydl_opts = {
+                   ydl_opts = {
                 'format': format_str,
                 'outtmpl': f'downloads/{output_filename}',
-                'merge_output_format': 'mp4',
-                'ffmpeg_location': r'C:\ffmpeg\bin\ffmpeg.exe',
                 'quiet': True,
-                'no_warnings': True
+                'no_warnings': True,
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['android', 'web'],
+                        'skip': ['hls', 'dash']
+                    }
+                },
+                'http_headers': {
+                    'User-Agent': 'com.google.android.youtube/17.36.4 (Linux; U; Android 12)',
+                }
             }
-        
         # Download the file
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
@@ -1510,3 +1512,4 @@ url = f"http://{ip}:5000"
 #qr.save("website_qr.png")
 
 print(f"QR Code saved! URL: {url}")
+
