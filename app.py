@@ -1350,7 +1350,6 @@ HTML_TEMPLATE = '''
 @app.route('/')
 def home():
     return HTML_TEMPLATE
-
 @app.route('/download2', methods=['POST'])
 def download2():
     """NEW BROWSER DOWNLOAD ROUTE"""
@@ -1359,13 +1358,12 @@ def download2():
         download_type = request.form.get('type', 'video')
         quality = request.form.get('quality', 'best')
         
-        # Create unique filename
         import uuid
         unique_id = str(uuid.uuid4())[:8]
         
         if download_type == 'audio':
             output_filename = f'audio_{unique_id}.mp3'
-           ydl_opts = {
+            ydl_opts = {
                 'format': 'bestaudio[ext=m4a]/bestaudio/best',
                 'outtmpl': f'downloads/{output_filename}',
                 'quiet': True,
@@ -1380,7 +1378,14 @@ def download2():
                     'User-Agent': 'com.google.android.youtube/17.36.4 (Linux; U; Android 12)',
                 }
             }
-                   ydl_opts = {
+        else:
+            output_filename = f'video_{unique_id}.mp4'
+            if quality == 'best':
+                format_str = 'best[ext=mp4]/best'
+            else:
+                format_str = f'best[height<={quality}][ext=mp4]/best[height<={quality}]/best'
+            
+            ydl_opts = {
                 'format': format_str,
                 'outtmpl': f'downloads/{output_filename}',
                 'quiet': True,
@@ -1395,28 +1400,20 @@ def download2():
                     'User-Agent': 'com.google.android.youtube/17.36.4 (Linux; U; Android 12)',
                 }
             }
-        # Download the file
+        
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             original_title = info.get('title', 'Video')
-            
-            # Clean filename for download
             safe_title = "".join(c for c in original_title if c.isalnum() or c in (' ', '-', '_')).rstrip()[:50]
             
             if download_type == 'audio':
                 download_name = f'{safe_title}.mp3'
-                # Check if file exists (might have different extension after conversion)
-                if os.path.exists(f'downloads/{output_filename[:-4]}.mp3'):
-                    file_path = f'downloads/{output_filename[:-4]}.mp3'
-                else:
-                    file_path = f'downloads/{output_filename}'
             else:
                 download_name = f'{safe_title}.mp4'
-                file_path = f'downloads/{output_filename}'
+            
+            file_path = f'downloads/{output_filename}'
         
-        # Check if file exists
         if os.path.exists(file_path):
-            # Send file to browser for download
             return send_file(
                 file_path,
                 as_attachment=True,
@@ -1426,6 +1423,54 @@ def download2():
         else:
             return "Error: File not found after download", 404
             
+    except Exception as e:
+        return f'''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Error - Sat.ytdownloader</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {{
+                    font-family: Arial;
+                    background: #000;
+                    color: white;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    padding: 20px;
+                }}
+                .box {{
+                    background: #1a1a1a;
+                    border: 2px solid #ff0000;
+                    border-radius: 20px;
+                    padding: 40px;
+                    text-align: center;
+                    max-width: 500px;
+                }}
+                h1 {{ color: #ff0000; }}
+                a {{
+                    display: inline-block;
+                    margin-top: 20px;
+                    padding: 15px 30px;
+                    background: #ff0000;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 10px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="box">
+                <h1>Download Error</h1>
+                <p>{str(e)}</p>
+                <a href="/">Try Again</a>
+            </div>
+        </body>
+        </html>
+        ''', 500
     except Exception as e:
         return f'''
         <!DOCTYPE html>
@@ -1512,4 +1557,5 @@ url = f"http://{ip}:5000"
 #qr.save("website_qr.png")
 
 print(f"QR Code saved! URL: {url}")
+
 
