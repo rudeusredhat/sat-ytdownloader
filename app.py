@@ -1352,7 +1352,7 @@ def home():
     return HTML_TEMPLATE
 @app.route('/download2', methods=['POST'])
 def download2():
-    """NEW BROWSER DOWNLOAD ROUTE"""
+    """NEW BROWSER DOWNLOAD ROUTE - BOT BYPASS FIXED"""
     try:
         url = request.form['url']
         download_type = request.form.get('type', 'video')
@@ -1361,22 +1361,29 @@ def download2():
         import uuid
         unique_id = str(uuid.uuid4())[:8]
         
+        # Base options to trick YouTube
+        base_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['ios', 'web_creator'],
+                    'player_skip': ['web'],
+                }
+            },
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-us,en;q=0.5',
+            }
+        }
+
         if download_type == 'audio':
             output_filename = f'audio_{unique_id}.mp3'
             ydl_opts = {
-                'format': 'bestaudio[ext=m4a]/bestaudio/best',
+                **base_opts,
+                'format': 'bestaudio/best',
                 'outtmpl': f'downloads/{output_filename}',
-                'quiet': True,
-                'no_warnings': True,
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['android', 'web'],
-                        'skip': ['hls', 'dash']
-                    }
-                },
-                'http_headers': {
-                    'User-Agent': 'com.google.android.youtube/17.36.4 (Linux; U; Android 12)',
-                }
             }
         else:
             output_filename = f'video_{unique_id}.mp4'
@@ -1386,19 +1393,9 @@ def download2():
                 format_str = f'best[height<={quality}][ext=mp4]/best[height<={quality}]/best'
             
             ydl_opts = {
+                **base_opts,
                 'format': format_str,
                 'outtmpl': f'downloads/{output_filename}',
-                'quiet': True,
-                'no_warnings': True,
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['android', 'web'],
-                        'skip': ['hls', 'dash']
-                    }
-                },
-                'http_headers': {
-                    'User-Agent': 'com.google.android.youtube/17.36.4 (Linux; U; Android 12)',
-                }
             }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -1406,11 +1403,7 @@ def download2():
             original_title = info.get('title', 'Video')
             safe_title = "".join(c for c in original_title if c.isalnum() or c in (' ', '-', '_')).rstrip()[:50]
             
-            if download_type == 'audio':
-                download_name = f'{safe_title}.mp3'
-            else:
-                download_name = f'{safe_title}.mp4'
-            
+            download_name = f"{safe_title}.mp3" if download_type == 'audio' else f"{safe_title}.mp4"
             file_path = f'downloads/{output_filename}'
         
         if os.path.exists(file_path):
@@ -1421,55 +1414,16 @@ def download2():
                 mimetype='video/mp4' if download_type == 'video' else 'audio/mpeg'
             )
         else:
-            return "Error: File not found after download", 404
+            return "Error: File not found", 404
             
     except Exception as e:
         return f'''
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Error - Sat.ytdownloader</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body {{
-                    font-family: Arial;
-                    background: #000;
-                    color: white;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 100vh;
-                    margin: 0;
-                    padding: 20px;
-                }}
-                .box {{
-                    background: #1a1a1a;
-                    border: 2px solid #ff0000;
-                    border-radius: 20px;
-                    padding: 40px;
-                    text-align: center;
-                    max-width: 500px;
-                }}
-                h1 {{ color: #ff0000; }}
-                a {{
-                    display: inline-block;
-                    margin-top: 20px;
-                    padding: 15px 30px;
-                    background: #ff0000;
-                    color: white;
-                    text-decoration: none;
-                    border-radius: 10px;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="box">
-                <h1>Download Error</h1>
-                <p>{str(e)}</p>
-                <a href="/">Try Again</a>
-            </div>
+        <body style="background:#000;color:#fff;font-family:sans-serif;text-align:center;padding:50px;">
+            <h1 style="color:red;">❌ Download Error</h1>
+            <p>{str(e)}</p>
+            <p style="color:#888;">YouTube is blocking the request. Try a different video link.</p>
+            <a href="/" style="color:#ff0000;text-decoration:none;border:1px solid #ff0000;padding:10px 20px;border-radius:10px;">Go Back</a>
         </body>
-        </html>
         ''', 500
     except Exception as e:
         return f'''
@@ -1557,5 +1511,6 @@ url = f"http://{ip}:5000"
 #qr.save("website_qr.png")
 
 print(f"QR Code saved! URL: {url}")
+
 
 
