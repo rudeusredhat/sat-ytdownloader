@@ -1506,6 +1506,7 @@ ip = "192.168.43.123"  # Change to your IP
 url = f"http://{ip}:5000"
 
 # Generate QR
-qr = qrcode.make(url)
-qr.save("website_qr.png")
+#qr = qrcode.make(url)
+#qr.save("website_qr.png")
+
 print(f"QR Code saved! URL: {url}")
