@@ -1499,7 +1499,7 @@ if __name__ == '__main__':
     print("")
     
     app.run(debug=True, host='0.0.0.0', port=5000)
-    import qrcode
+    
 
 # Your IP address
 ip = "192.168.43.123"  # Change to your IP
