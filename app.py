@@ -1375,7 +1375,7 @@ def download2():
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             }
         }
-        if download_type == 'audio':
+                if download_type == 'audio':
             output_filename = f'audio_{unique_id}.mp3'
             ydl_opts = {
                 **base_opts,
@@ -1384,15 +1384,17 @@ def download2():
             }
         else:
             output_filename = f'video_{unique_id}.mp4'
+            # Sabse stable format setting
             if quality == 'best':
-                format_str = 'best[ext=mp4]/best'
+                format_str = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
             else:
-                format_str = f'best[height<={quality}][ext=mp4]/best[height<={quality}]/best'
+                format_str = f'bestvideo[height<={quality}][ext=mp4]+bestaudio[ext=m4a]/best[height<={quality}]/best'
             
             ydl_opts = {
                 **base_opts,
                 'format': format_str,
                 'outtmpl': f'downloads/{output_filename}',
+                'merge_output_format': 'mp4',
             }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -1508,6 +1510,7 @@ url = f"http://{ip}:5000"
 #qr.save("website_qr.png")
 
 print(f"QR Code saved! URL: {url}")
+
 
 
 
